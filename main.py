@@ -254,7 +254,7 @@ def show_phones(args,book:AddressBook):
         return f"Phones for {name}:\n{record.show_phones()}"
 
 def show_all_contacts(book:AddressBook):
-     return show_all_contacts(book)
+     return book.show_all_contacts()
 
 @input_error
 def add_birthday(args,book:AddressBook):
