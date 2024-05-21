@@ -114,7 +114,11 @@ class Record:
         PhoneValidationError exception if new phone number is incorrect
         NotUniquePhoneError exception if new phone already in list of phones
         """
-        self.phones[self.phones.index(self.find_phone(old_phone_number))] = self.check_duplicate(new_phone_number)
+        old_phone = self.find_phone(old_phone_number)
+        if old_phone:
+            self.phones[self.phones.index(old_phone)] = self.check_duplicate(new_phone_number)
+        else:
+            raise ValueError(f"Phone {old_phone_number} not found")
 
     def remove_phone(self,phone_number:str)->None:
         """
@@ -186,8 +190,9 @@ class AddressBook(UserDict):
         return upcoming_birthdays
     
     def show_all_contacts(self):
-        for name in self.data.keys():
-            return f"{name}\n"
+        
+        contacts = ", ".join(name for name in self.data.keys())
+        return contacts
 
 # Business Logic
 
