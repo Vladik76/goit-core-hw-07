@@ -145,7 +145,7 @@ class Record:
     
 
     def __str__(self):
-        return f"Contact name: {self.name.value},date of birth:{str(self.birthday)}, phones: {'; '.join(p.value for p in self.phones)}"
+        return f"Contact name: {self.name.value}, Date of birth:{str(self.birthday)}, Phones: {'; '.join(p.value for p in self.phones)}"
     
 
 
@@ -171,27 +171,44 @@ class AddressBook(UserDict):
         """
         del self.data[name]
     
-    def get_upcoming_birthdays(self):
+    def find_next_weekday(self,start_date, weekday):
+        days_ahead = weekday - start_date.weekday()
+        if days_ahead <= 0:
+            days_ahead += 7
+        return start_date + timedelta(days=days_ahead)
 
+
+    def adjust_for_weekend(self,birthday):
+        if birthday.weekday() >= 5:
+            return self.find_next_weekday(birthday, 0)
+        return birthday
+    
+    def date_to_string(self,date):
+        return date.strftime("%d.%m.%Y")
+
+    def get_upcoming_birthdays(self, days=7):
         upcoming_birthdays = []
         today = date.today()
-
         for contact in self.data.items():
             name,contact_data = contact  #unpack tuple
             if contact_data.birthday:
                 birthday_this_year = contact_data.birthday.value.replace(year=today.year)
-                next_monday = today + timedelta(days=(0 - today.weekday() + 7) % 7)
-                next_sunday = next_monday + timedelta(days=6)
-                
-                if next_monday <= birthday_this_year <=next_sunday:
-                    birthday_this_year = str(datetime.strftime(birthday_this_year,"%d.%m.%Y"))
-                    upcoming_birthdays.append(f"{name} has congratulation date on {birthday_this_year}")
-  
+                if birthday_this_year < today:
+                    birthday_this_year=birthday_this_year.replace(year=today.year+1)
+
+                if 0 <= (birthday_this_year - today).days <= days:
+                    birthday_this_year=self.adjust_for_weekend(birthday_this_year)
+                    congratulation_date_str = self.date_to_string(birthday_this_year)
+                    upcoming_birthdays.append(f"{name} has congratulation date on {congratulation_date_str}")
         return upcoming_birthdays
-    
+
     def show_all_contacts(self):
         
-        contacts = ", ".join(name for name in self.data.keys())
+        contacts=[]
+        for contact in self.data.items():
+            name,contact_data = contact  #unpack tuple
+            contacts.append(str(contact_data))
+        
         return contacts
 
 # Business Logic
@@ -259,7 +276,7 @@ def show_phones(args,book:AddressBook):
         return f"Phones for {name}:\n{record.show_phones()}"
 
 def show_all_contacts(book:AddressBook):
-     return book.show_all_contacts()
+     return "\n".join(book.show_all_contacts())
 
 @input_error
 def add_birthday(args,book:AddressBook):
@@ -315,7 +332,7 @@ def main():
             print(add_birthday(args,book))
 
         elif command == "show-birthday":
-            print(show_birthdays(args,book))
+            print(show_birthday(args,book))
 
         elif command == "birthdays":
             print(show_birthdays(book))
@@ -327,3 +344,12 @@ def main():
 
 if __name__ == "__main__":
    main()
+
+# book=AddressBook()
+# print(add_contact(['john','4444444444'],book))
+# print(add_birthday(['john','25.05.1976'],book))
+# print(add_contact(['jane','3444444444'],book))
+# print(add_birthday(['jane','26.05.1976'],book))
+# print(show_birthday(['jane'],book))
+# print(show_all_contacts(book))
+# print(show_birthdays(book))
